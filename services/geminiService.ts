@@ -1,7 +1,54 @@
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { CVData } from '../types';
 
-// Initialize the client.
+import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { CVData, Candidate } from '../types';
+import { redactPII } from '../utils/privacy';
+
+// --- CACHING LAYER ---
+// Simple in-memory/local storage cache to prevent duplicate expensive AI calls
+// In production, this would use Redis or a database.
+const CACHE_KEY_PREFIX = 'scabbio_ai_cache_';
+
+const getFromCache = <T>(key: string): T | null => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY_PREFIX + key);
+    if (cached) {
+      const { data, expiry } = JSON.parse(cached);
+      if (Date.now() < expiry) {
+        console.log(`[AI Cache] Hit for ${key}`);
+        return data;
+      }
+      localStorage.removeItem(CACHE_KEY_PREFIX + key);
+    }
+  } catch (e) {
+    // Ignore cache errors
+  }
+  return null;
+};
+
+const setInCache = (key: string, data: any, ttlSeconds = 3600) => {
+  try {
+    const payload = {
+      data,
+      expiry: Date.now() + (ttlSeconds * 1000)
+    };
+    localStorage.setItem(CACHE_KEY_PREFIX + key, JSON.stringify(payload));
+  } catch (e) {
+    console.warn("Failed to set AI cache", e);
+  }
+};
+
+// Helper hash function for cache keys
+const hashString = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash.toString();
+};
+
+// --- API CLIENT ---
+
 // Note: process.env.API_KEY is polyfilled in vite.config.ts to access the VITE_GEMINI_API_KEY
 // This adheres to the strict requirement of the @google/genai SDK to use process.env.API_KEY.
 const getClient = (): GoogleGenAI | null => {
@@ -15,6 +62,15 @@ const getClient = (): GoogleGenAI | null => {
 };
 
 export const generateCVFromTranscript = async (transcript: string): Promise<CVData> => {
+  // 1. Data Protection: Mask PII before sending to AI or Cache
+  // In a production environment, this would happen on a backend proxy service
+  const safeTranscript = redactPII(transcript);
+
+  // 2. Check Cache
+  const cacheKey = `cv_${hashString(safeTranscript.substring(0, 100))}`; // Hash first 100 chars
+  const cached = getFromCache<CVData>(cacheKey);
+  if (cached) return cached;
+
   const ai = getClient();
 
   // Fallback to mock if AI client is not available (missing key)
@@ -30,7 +86,7 @@ export const generateCVFromTranscript = async (transcript: string): Promise<CVDa
     IMPORTANT: The transcript might be in Italian, English, or another language. 
     Regardless of the input language, translate the content and extract the data into ENGLISH.
     
-    Transcript: "${transcript}"
+    Transcript: "${safeTranscript}"
     
     Return the data in strict JSON format matching the schema provided.
     Ensure "skills" is an array of strings.
@@ -71,7 +127,10 @@ export const generateCVFromTranscript = async (transcript: string): Promise<CVDa
     });
 
     if (response.text) {
-      return JSON.parse(response.text) as CVData;
+      const parsedData = JSON.parse(response.text) as CVData;
+      // 3. Set Cache
+      setInCache(cacheKey, parsedData);
+      return parsedData;
     }
     throw new Error("No response text generated from Gemini.");
   } catch (error) {
@@ -87,6 +146,12 @@ export const analyzeJobMatch = async (
   candidateSkills: string[], 
   jobSkills: string[]
 ): Promise<string> => {
+  // 1. Check Cache
+  const inputStr = `${candidateName}-${jobTitle}-${candidateSkills.join()}-${jobSkills.join()}`;
+  const cacheKey = `match_${hashString(inputStr)}`;
+  const cached = getFromCache<string>(cacheKey);
+  if (cached) return cached;
+
   const ai = getClient();
   
   // Fallback if AI client unavailable
@@ -107,10 +172,40 @@ export const analyzeJobMatch = async (
       contents: prompt,
     });
     
-    return response.text || "Analysis complete but no text returned.";
+    const text = response.text || "Analysis complete but no text returned.";
+    // 2. Set Cache
+    setInCache(cacheKey, text);
+    return text;
   } catch (error) {
     console.error("Gemini Match Error:", error);
     return "Analysis unavailable due to service interruption.";
+  }
+};
+
+export const chatWithAI = async (message: string, candidate: Candidate): Promise<string> => {
+  const ai = getClient();
+  if (!ai) return "I'm currently in demo mode. Connect your API key to chat with me!";
+
+  const context = `
+    You are 'Scabbio Bot', a helpful HR assistant for the candidate ${candidate.name}.
+    Current Role: ${candidate.role}.
+    Employability Score: ${candidate.employabilityScore}/100.
+    Work Preference: ${candidate.workPreference}.
+    Well-being Score: ${candidate.wellBeingScore}/10.
+
+    User Message: "${message}"
+
+    Answer briefly (max 50 words) and professionally. If asked about status, say their profile is under review.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: context,
+    });
+    return response.text || "I didn't catch that.";
+  } catch (e) {
+    return "Service temporary unavailable.";
   }
 };
 

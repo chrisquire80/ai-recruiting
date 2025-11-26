@@ -1,9 +1,13 @@
+
 import { Candidate, JobOffer } from './types';
 
 export const RICCARDO_PINNA: Candidate = {
   id: 'rp1',
   name: 'Riccardo Pinna',
   role: 'Product Designer',
+  source: 'AI_VOICE',
+  workPreference: 'HYBRID',
+  wellBeingScore: 8.5,
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200',
   skills: {
     'Design Thinking': 95,
@@ -109,9 +113,36 @@ export const CANDIDATES_POOL: Candidate[] = [
         id: '2',
         name: 'Sara Baccelli',
         role: 'Business Developer',
+        source: 'MANUAL_UPLOAD',
+        workPreference: 'ONSITE',
+        wellBeingScore: 9.2,
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200',
         skills: { 'Sales': 95, 'Communication': 98, 'Negotiation': 90, 'CRM': 85 },
         employabilityScore: 98,
         lastActive: '2023-10-24'
+    },
+    {
+        id: '3',
+        name: 'Marco Rossi',
+        role: 'Frontend Developer',
+        source: 'AI_VOICE',
+        workPreference: 'REMOTE',
+        wellBeingScore: 6.5,
+        avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200&h=200',
+        skills: { 'React': 90, 'TypeScript': 85, 'CSS': 80 },
+        employabilityScore: 82,
+        lastActive: '2023-11-10'
+    },
+    {
+        id: '4',
+        name: 'Elena Verdi',
+        role: 'Data Scientist',
+        source: 'AI_VOICE',
+        workPreference: 'REMOTE',
+        wellBeingScore: 7.8,
+        avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200&h=200',
+        skills: { 'Python': 95, 'Machine Learning': 92, 'SQL': 88 },
+        employabilityScore: 95,
+        lastActive: '2023-11-15'
     }
 ];

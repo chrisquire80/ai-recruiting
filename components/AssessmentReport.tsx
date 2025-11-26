@@ -1,16 +1,16 @@
 import React from 'react';
-import { Candidate } from '../types';
 import { Card } from './ui/Card';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Share2, Download, Hexagon, Users, Lightbulb, Zap, Heart, MessageCircle } from 'lucide-react';
+import { Share2, Download, Hexagon, Users, Lightbulb, Zap, Heart, MessageCircle, ShieldCheck, Trash2 } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useTranslation } from '../utils/i18n';
+import { useCandidateContext } from '../context/CandidateContext';
 
-interface Props {
-  candidate: Candidate;
-}
-
-const AssessmentReport: React.FC<Props> = ({ candidate }) => {
-  if (!candidate.assessmentProfile) return <div>No assessment data available.</div>;
+const AssessmentReport: React.FC = () => {
+  const { currentCandidate: candidate } = useCandidateContext();
+  const { t } = useTranslation();
+  
+  if (!candidate || !candidate.assessmentProfile) return <div>No assessment data available.</div>;
 
   const { assessmentProfile: profile } = candidate;
 
@@ -23,6 +23,23 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
       case 'AGIRE': return <Zap size={24} className="text-white" />;
       case 'SENTIRE': return <Heart size={24} className="text-white" />;
       default: return <Hexagon size={24} className="text-white" />;
+    }
+  };
+
+  const handleExportData = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(candidate, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", `gdpr_export_${candidate.id}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm("Sei sicuro? Questa azione è irreversibile e cancellerà tutti i tuoi dati personali dai nostri sistemi.")) {
+        alert("Richiesta di cancellazione ricevuta. I tuoi dati verranno eliminati entro 30 giorni come da normativa GDPR.");
+        window.location.reload();
     }
   };
 
@@ -46,10 +63,10 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
                 Swipe - Drive - Brain
              </div>
              <h1 className="text-5xl font-extrabold text-slate-900 tracking-tight">{candidate.name}</h1>
-             <p className="text-xl text-slate-500 font-medium">Sintesi del profilo - {new Date().toLocaleDateString()}</p>
+             <p className="text-xl text-slate-500 font-medium">{t('report.summary')} - {new Date().toLocaleDateString()}</p>
           </div>
           <div className="md:ml-auto flex gap-3">
-             <Button variant="secondary" icon={Share2}>Condividi</Button>
+             <Button variant="secondary" icon={Share2}>{t('report.share')}</Button>
              <Button variant="primary" icon={Download}>PDF</Button>
           </div>
         </div>
@@ -59,9 +76,9 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
       <div className="grid lg:grid-cols-2 gap-8">
          <Card className="h-full">
             <div className="mb-6">
-               <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">Sezione #1</span>
-               <h2 className="text-3xl font-extrabold text-slate-800 mt-3">ANALISI DELLA PERSONALITÀ</h2>
-               <p className="text-pink-500 font-bold text-lg mt-1">Stile Personale: {profile.style}</p>
+               <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">{t('report.section1')}</span>
+               <h2 className="text-3xl font-extrabold text-slate-800 mt-3">{t('report.personality')}</h2>
+               <p className="text-pink-500 font-bold text-lg mt-1">{t('report.style')}: {profile.style}</p>
             </div>
             <p className="text-slate-600 leading-relaxed mb-6 text-lg">
                {profile.summary}
@@ -77,16 +94,16 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
          </Card>
 
          <div className="space-y-6">
-            <Card title="Principali punti di forza">
+            <Card title={t('report.strengths')}>
                <div className="space-y-6">
                   <div>
-                     <h4 className="font-bold text-slate-800 mb-2">Gestione delle relazioni</h4>
+                     <h4 className="font-bold text-slate-800 mb-2">{t('report.relations')}</h4>
                      <ul className="list-disc pl-5 space-y-1 text-slate-600">
                         {profile.strengths.relations.map((s,i) => <li key={i}>{s}</li>)}
                      </ul>
                   </div>
                   <div>
-                     <h4 className="font-bold text-slate-800 mb-2">Gestione del lavoro</h4>
+                     <h4 className="font-bold text-slate-800 mb-2">{t('report.work')}</h4>
                      <ul className="list-disc pl-5 space-y-1 text-slate-600">
                         {profile.strengths.work.map((s,i) => <li key={i}>{s}</li>)}
                      </ul>
@@ -94,7 +111,7 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
                </div>
             </Card>
 
-            <Card title="Aree di miglioramento" className="bg-slate-50 border-none">
+            <Card title={t('report.improvement')} className="bg-slate-50 border-none">
                <ul className="space-y-3">
                   {profile.areasOfImprovement.map((area, i) => (
                      <li key={i} className="flex gap-3 text-slate-600">
@@ -110,9 +127,9 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
       {/* TALENT CLOUD (Page 3 PDF) */}
       <Card>
          <div className="mb-10 text-center">
-            <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">Sezione #2</span>
-            <h2 className="text-4xl font-extrabold text-slate-800 mt-4">TALENT CLOUD</h2>
-            <p className="text-slate-400 mt-2">Le competenze comportamentali predittive</p>
+            <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">{t('report.section2')}</span>
+            <h2 className="text-4xl font-extrabold text-slate-800 mt-4">{t('report.talentCloud')}</h2>
+            <p className="text-slate-400 mt-2">{t('report.predictive')}</p>
          </div>
 
          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
@@ -134,20 +151,13 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
                </div>
             ))}
          </div>
-         
-         <div className="mt-12 flex flex-wrap justify-center gap-6 text-xs text-slate-500">
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-pink-500"></span>Altamente sviluppato</div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-orange-400"></span>Ben sviluppato</div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-400"></span>Moderatamente sviluppato</div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-400"></span>Poco sviluppato</div>
-         </div>
       </Card>
 
       {/* MOTIVATIONS & MANAGEMENT (Page 10 PDF) */}
       <div className="grid lg:grid-cols-3 gap-8">
          <Card className="lg:col-span-2">
-            <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">Sezione #3</span>
-            <h2 className="text-3xl font-extrabold text-slate-800 mt-3 mb-8">MOTIVAZIONI & MANAGEMENT</h2>
+            <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">{t('report.section3')}</span>
+            <h2 className="text-3xl font-extrabold text-slate-800 mt-3 mb-8">{t('report.motivations')}</h2>
             
             <div className="grid md:grid-cols-3 gap-6">
                {profile.motivations.managementStyle.map((style, idx) => (
@@ -180,11 +190,11 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
          </Card>
 
          <div className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-[2rem] p-8 text-white shadow-2xl">
-             <h3 className="font-bold text-lg mb-6">Fattori Chiave</h3>
+             <h3 className="font-bold text-lg mb-6">{t('report.keyFactors')}</h3>
              
              <div className="space-y-6">
                 <div>
-                   <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Ciò che lo motiva</h4>
+                   <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">{t('report.motivators')}</h4>
                    <div className="flex flex-wrap gap-2">
                       {profile.motivations.top.map(m => (
                          <span key={m} className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg text-sm border border-emerald-500/30">
@@ -195,7 +205,7 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
                 </div>
 
                 <div>
-                   <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Ciò che lo demotiva</h4>
+                   <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">{t('report.demotivators')}</h4>
                    <div className="flex flex-wrap gap-2">
                       {profile.motivations.bottom.map(m => (
                          <span key={m} className="px-3 py-1 bg-red-500/20 text-red-300 rounded-lg text-sm border border-red-500/30">
@@ -207,6 +217,29 @@ const AssessmentReport: React.FC<Props> = ({ candidate }) => {
              </div>
          </div>
       </div>
+
+      {/* GDPR & DATA CONTROL SECTION */}
+      <Card className="bg-slate-50 border-slate-200">
+         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+               <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck size={20} className="text-slate-600" />
+                  <h3 className="font-bold text-slate-800 text-lg">{t('report.privacyTitle')}</h3>
+               </div>
+               <p className="text-slate-500 text-sm max-w-xl">
+                  {t('report.privacyDesc')}
+               </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+               <Button variant="secondary" icon={Download} onClick={handleExportData}>
+                  {t('report.export')}
+               </Button>
+               <Button variant="danger" icon={Trash2} onClick={handleDeleteAccount}>
+                  {t('report.delete')}
+               </Button>
+            </div>
+         </div>
+      </Card>
     </div>
   );
 };

@@ -13,6 +13,17 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: 3000,
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            recharts: ['recharts'],
+            ui: ['lucide-react']
+          }
+        }
+      }
+    },
     define: {
       // We polyfill process.env.API_KEY for the @google/genai SDK.
       // We prioritize VITE_GEMINI_API_KEY from the .env file, but fallback to API_KEY

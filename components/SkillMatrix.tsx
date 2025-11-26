@@ -1,16 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Candidate, JobOffer } from '../types';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip } from 'recharts';
 import { AlertTriangle, Check, Info, List, BarChart2 } from 'lucide-react';
 import { Card } from './ui/Card';
 import { analyzeSkills } from '../utils/analytics';
+import { useCandidateContext } from '../context/CandidateContext';
 
-interface SkillMatrixProps {
-  candidate: Candidate;
-  job: JobOffer;
-}
-
-const SkillMatrix: React.FC<SkillMatrixProps> = ({ candidate, job }) => {
+const SkillMatrix: React.FC = () => {
+  const { currentCandidate: candidate, jobOffer: job } = useCandidateContext();
   const [viewMode, setViewMode] = useState<'chart' | 'list'>('chart');
   
   const { chartData, criticalGaps } = useMemo(() => analyzeSkills(candidate, job), [candidate, job]);
@@ -155,7 +151,6 @@ const SkillMatrix: React.FC<SkillMatrixProps> = ({ candidate, job }) => {
                                  </p>
                                  <div className="w-full bg-slate-200 rounded-full h-1.5">
                                      <div className="bg-slate-400 h-1.5 rounded-l-full" style={{ width: `${g.candidateScore}%` }}></div>
-                                     {/* This represents the gap visually, but strictly speaking it's just the candidate score bar */}
                                  </div>
                              </div>
                          </div>

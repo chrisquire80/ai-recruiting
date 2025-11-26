@@ -1,7 +1,8 @@
+
 export type ViewState = 
   | 'ONBOARDING'
-  | 'DASHBOARD'
-  | 'REPORT' // New view for the detailed PDF report
+  | 'DASHBOARD' // Now maps to HR Analytics
+  | 'REPORT'
   | 'VOICE_CV'
   | 'SKILL_MATRIX'
   | 'EMPLOYABILITY'
@@ -22,14 +23,14 @@ export interface MotivationScore {
 }
 
 export interface AssessmentProfile {
-  style: string; // e.g., "Collaboratore"
+  style: string;
   summary: string;
   strengths: {
     relations: string[];
     work: string[];
     emotions: string[];
   };
-  tags: string[]; // e.g., ["#Umile", "#Empatico"]
+  tags: string[];
   areasOfImprovement: string[];
   motivations: {
     top: string[];
@@ -53,13 +54,18 @@ export interface Candidate {
   skills: Record<string, number>; // 0-100
   employabilityScore: number;
   lastActive: string;
-  assessmentProfile?: AssessmentProfile; // Optional detailed profile
+  assessmentProfile?: AssessmentProfile;
+  aiConsent?: boolean;
+  source: 'AI_VOICE' | 'MANUAL_UPLOAD';
+  // New HR Tech Trends 2025 Fields
+  workPreference: 'REMOTE' | 'HYBRID' | 'ONSITE';
+  wellBeingScore?: number; // 0-10 (High means good well-being, Low means burnout risk)
 }
 
 export interface JobOffer {
   id: string;
   title: string;
-  requiredSkills: Record<string, number>; // 0-100 (level required)
+  requiredSkills: Record<string, number>;
   department: string;
   location: string;
 }
@@ -86,7 +92,7 @@ export interface CVData {
 
 export interface MatchingResult {
   candidateId: string;
-  affinityScore: number; // 0-100
+  affinityScore: number;
   matchDetails: {
     skillMatch: number;
     experienceMatch: number;
@@ -94,4 +100,12 @@ export interface MatchingResult {
     compensationMatch: number;
     industryMatch: number;
   };
+  humanReviewed: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  timestamp: number;
 }

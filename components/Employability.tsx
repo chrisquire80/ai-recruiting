@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { Candidate } from '../types';
 import { TrendingUp, Award, Briefcase, Users, Calendar, Settings, RotateCcw, Save, Download } from 'lucide-react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { useCandidateContext } from '../context/CandidateContext';
 import { 
   ScoringFactor, 
   loadFactors, 
@@ -14,11 +14,8 @@ import {
   generateReport 
 } from '../utils/scoring';
 
-interface EmployabilityProps {
-  candidate: Candidate;
-}
-
-const Employability: React.FC<EmployabilityProps> = ({ candidate }) => {
+const Employability: React.FC = () => {
+  const { currentCandidate: candidate } = useCandidateContext();
   const [factors, setFactors] = useState<ScoringFactor[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 

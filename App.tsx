@@ -1,10 +1,12 @@
+
 import React, { useState, Suspense } from 'react';
 import { ViewState } from './types';
 import { Layout } from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Loader2 } from 'lucide-react';
-import { RICCARDO_PINNA, MOCK_JOB, CANDIDATES_POOL } from './mockData';
 import OnboardingWizard from './components/OnboardingWizard';
+import { I18nProvider } from './utils/i18n';
+import { CandidateProvider } from './context/CandidateContext';
 
 // Lazy load feature modules
 const VoiceCV = React.lazy(() => import('./components/VoiceCV'));
@@ -12,6 +14,7 @@ const SkillMatrix = React.lazy(() => import('./components/SkillMatrix'));
 const Employability = React.lazy(() => import('./components/Employability'));
 const JobMatching = React.lazy(() => import('./components/JobMatching'));
 const AssessmentReport = React.lazy(() => import('./components/AssessmentReport'));
+const HrAnalytics = React.lazy(() => import('./components/HrAnalytics'));
 
 const App: React.FC = () => {
   // Start with Onboarding for demo flow
@@ -30,20 +33,25 @@ const App: React.FC = () => {
   );
 
   return (
-    <ErrorBoundary>
-      <Layout currentView={view} setView={setView}>
-        <Suspense fallback={<LoadingScreen />}>
-          <div className="animate-fade-in duration-500">
-            {view === 'ONBOARDING' && <OnboardingWizard onComplete={() => setView('REPORT')} />}
-            {view === 'REPORT' && <AssessmentReport candidate={RICCARDO_PINNA} />}
-            {view === 'VOICE_CV' && <VoiceCV />}
-            {view === 'SKILL_MATRIX' && <SkillMatrix candidate={RICCARDO_PINNA} job={MOCK_JOB} />}
-            {view === 'EMPLOYABILITY' && <Employability candidate={RICCARDO_PINNA} />}
-            {view === 'JOB_MATCHING' && <JobMatching candidates={CANDIDATES_POOL} job={MOCK_JOB} />}
-          </div>
-        </Suspense>
-      </Layout>
-    </ErrorBoundary>
+    <I18nProvider>
+      <CandidateProvider>
+        <ErrorBoundary>
+          <Layout currentView={view} setView={setView}>
+            <Suspense fallback={<LoadingScreen />}>
+              <div className="animate-fade-in duration-500">
+                {view === 'ONBOARDING' && <OnboardingWizard onComplete={() => setView('REPORT')} />}
+                {view === 'REPORT' && <AssessmentReport />}
+                {view === 'VOICE_CV' && <VoiceCV />}
+                {view === 'SKILL_MATRIX' && <SkillMatrix />}
+                {view === 'EMPLOYABILITY' && <Employability />}
+                {view === 'JOB_MATCHING' && <JobMatching />}
+                {view === 'DASHBOARD' && <HrAnalytics />}
+              </div>
+            </Suspense>
+          </Layout>
+        </ErrorBoundary>
+      </CandidateProvider>
+    </I18nProvider>
   );
 };
 
