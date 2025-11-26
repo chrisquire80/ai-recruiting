@@ -1,0 +1,7 @@
+{
+  "name": "HR Platform",
+  "description": "Enterprise recruiting platform featuring Voice-to-CV, Skill Assessment Matrices, Employability Scoring, and AI Job Matching.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
